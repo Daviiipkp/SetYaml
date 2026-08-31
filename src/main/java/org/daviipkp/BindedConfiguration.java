@@ -5,7 +5,7 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-public class BindedConfiguration<T> {
+public class BindedConfiguration<T extends Bindable> {
 
     private Path configurationFile;
     private T configurationObject;
@@ -30,7 +30,11 @@ public class BindedConfiguration<T> {
             ErrorHandler.handleYaml(e);
             return;
         }
-        configurationObject = SetYaml.getInstance().getSnake().loadAs(is, configurationClass);
+        configurationObject = SetYaml.getSnake().loadAs(is, configurationClass);
+    }
+
+    public T getObject() {
+        return configurationObject;
     }
 
     

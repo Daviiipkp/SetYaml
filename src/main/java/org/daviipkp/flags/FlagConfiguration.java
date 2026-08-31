@@ -1,0 +1,86 @@
+package org.daviipkp.flags;
+
+import java.io.File;
+import java.net.URISyntaxException;
+import java.nio.file.Path;
+
+import org.daviipkp.Bindable;
+import org.daviipkp.Configurable;
+import org.daviipkp.SetYaml;
+import org.daviipkp.WatchType;
+
+public class FlagConfiguration implements Configurable, Bindable {
+
+
+    private boolean support_bind;
+    private boolean bind_itself;
+    private WatchType watch_type;
+    private long watch_service_delay;
+    private long polling_delay;
+
+    public FlagConfiguration() {
+
+    }
+
+    public void enableBind() {
+        support_bind = true;
+    }
+
+    public void disableBind() {
+        support_bind = false;
+    }
+
+    public boolean canBind() {
+        return support_bind;
+    }
+
+    public void setWatchType(WatchType arg0) {
+        watch_type = arg0;
+    }
+
+    public WatchType getWatchType() {
+        return watch_type;
+    }
+
+    public long getWatchServiceDelay() {
+        return watch_service_delay;
+    }
+
+    public void setWatchWatchServiceDelay(long watch_service_delay) {
+        this.watch_service_delay = watch_service_delay;
+    }
+
+    public long getPollingDelay() {
+        return polling_delay;
+    }
+
+    public void setPollingDelay(long polling_delay) {
+        this.polling_delay = polling_delay;
+    }
+
+    public boolean shouldBindItself(){
+        return bind_itself;
+    }
+
+    @Override
+    public void fillDefaults() {
+        support_bind = true;
+        bind_itself = false;
+        watch_type = WatchType.WATCH_SERVICE;
+        watch_service_delay = 1000;
+        polling_delay = 10000;
+    }
+
+    @Override
+    public Path getFile() {
+        try {
+            return new File(SetYaml.getRunningFolder().toFile(), "config.yml").toPath();
+        } catch (URISyntaxException e) {
+            
+            e.printStackTrace();
+            return null;
+        }
+
+    }
+
+}

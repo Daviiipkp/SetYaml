@@ -27,24 +27,29 @@ public class WatchServiceThread extends Thread {
                 WatchKey key = ws.take();
                 for(WatchEvent<?> event : key.pollEvents()) {
                     if(event.kind() == StandardWatchEventKinds.OVERFLOW)continue;
-                    Path file = (Path) event.context();
+                    Path file = (Path)event.context();
                     for(String f : files) {
                         if (file.toString().equals(f)) {
-                            SetYaml.getInstance().declareFileChange(file);
+                            SetYaml.getInstance().declareFileChange(folder.resolve((Path) event.context()));
                         }
                     }
                 }
 
+                boolean valid = key.reset();
+                if (!valid) {
+                    System.out.println("cant access " + folder);
+                    break;
+                }
             }
 
+            
+
         }catch(InterruptedException e) {
-
+            e.printStackTrace(); //change this
         }catch(Exception e) {
-
+            e.printStackTrace(); //change this
         }
         
-
-        super.run();
     }
 
     public static void watch(File file) {
