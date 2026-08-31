@@ -5,6 +5,8 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+import org.daviipkp.interfaces.Bindable;
+
 public class BindedConfiguration<T extends Bindable> {
 
     private Path configurationFile;

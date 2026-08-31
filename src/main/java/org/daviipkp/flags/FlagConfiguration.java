@@ -4,17 +4,23 @@ import java.io.File;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 
-import org.daviipkp.Bindable;
-import org.daviipkp.Configurable;
-import org.daviipkp.SetYaml;
-import org.daviipkp.WatchType;
+import org.daviipkp.Utils;
+import org.daviipkp.interfaces.Bindable;
+import org.daviipkp.interfaces.Configurable;
+import org.daviipkp.types.WatchType;
 
 public class FlagConfiguration implements Configurable, Bindable {
 
+    private String dynamic_file;
+
+    private String working_folder;
 
     private boolean support_bind;
+    private boolean support_dynamic;
     private boolean bind_itself;
+
     private WatchType watch_type;
+
     private long watch_service_delay;
     private long polling_delay;
 
@@ -62,11 +68,29 @@ public class FlagConfiguration implements Configurable, Bindable {
         return bind_itself;
     }
 
+    public boolean canDynamic() {
+        return support_dynamic;
+    }
+
+    public String getDynamicFile() {
+        return dynamic_file;
+    }
+
+    public String getWorkingFolder() {
+        return working_folder;
+    }
+
     @Override
     public void fillDefaults() {
+        dynamic_file = "dynamic.yml";
+        working_folder = ".";
+
         support_bind = true;
+        support_dynamic = true;
         bind_itself = false;
+
         watch_type = WatchType.WATCH_SERVICE;
+
         watch_service_delay = 1000;
         polling_delay = 10000;
     }
@@ -74,7 +98,7 @@ public class FlagConfiguration implements Configurable, Bindable {
     @Override
     public Path getFile() {
         try {
-            return new File(SetYaml.getRunningFolder().toFile(), "config.yml").toPath();
+            return new File(Utils.getRunningFolder().toFile(), "config.yml").toPath();
         } catch (URISyntaxException e) {
             
             e.printStackTrace();

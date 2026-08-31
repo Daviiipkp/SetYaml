@@ -1,6 +1,8 @@
-package org.daviipkp;
+package org.daviipkp.interfaces;
 
 import java.io.File;
+
+import org.daviipkp.Utils;
 
 public interface Configurable {
 

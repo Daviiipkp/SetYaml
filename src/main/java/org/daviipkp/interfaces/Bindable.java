@@ -1,4 +1,4 @@
-package org.daviipkp;
+package org.daviipkp.interfaces;
 
 import java.nio.file.Path;
 
