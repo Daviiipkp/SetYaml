@@ -3,3 +3,7 @@ support_bind: true
 polling_delay: 666
 watch_type: WATCH_SERVICE
 bind_itself: true
+dynamic_file: dynamic.yml
+working_folder: .
+support_dynamic: true
+debug: true

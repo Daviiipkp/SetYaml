@@ -36,6 +36,9 @@ public final class SetYaml {
     private static Yaml snake;
     private FlagConfiguration config;
 
+    @Dynamic
+    private static long dynamic_debug;
+
     private static SetYaml instance;
 
     public static SetYaml getInstance() {
@@ -50,8 +53,9 @@ public final class SetYaml {
     
     public static void main(String[] args) throws InterruptedException {
         instance = new SetYaml();
+        instance.registerDynamicClass(instance.getClass());
         while(true){
-            System.out.println(instance.getFlagConfiguration().getPollingDelay());
+            DebugUtils.debugDynamicFields();
             Thread.sleep(1000);
         }
     }
@@ -79,13 +83,16 @@ public final class SetYaml {
         if (!getFlagConfiguration().canDynamic()) {
             return;
         }
+        WatchServiceThread.pauseDynamic();
+        File fl = new File(getFlagConfiguration().getWorkingFolder(), getFlagConfiguration().getDynamicFile());
         for(Field f : clazz.getDeclaredFields()) {
             if (Modifier.isStatic(f.getModifiers()) && f.isAnnotationPresent(Dynamic.class)) {
                 f.setAccessible(true);
                 dynamic.add(f);
-                //gotta dump each field into the dynamic.yml file. 
+                YamlUtils.unsafeFillValue(fl, YamlUtils.parseField(f), f);
             }
         }
+        WatchServiceThread.resumeDynamic();
     }
 
     public <T extends Configurable> void createConfigurationFile(Class<T> clazz, T model, File file, boolean overwrite) {
@@ -136,20 +143,20 @@ public final class SetYaml {
     }
 
 
-    public <T extends Configurable> T createConfigurationObject(Class<T> clazz, File file) {
+    public <T extends Configurable> T createConfigurationObject(Class<T> clazz, File file, boolean replaceEmptyFieldsWithDefaults) {
         //CHECK IF AN OBJECT OF THAT CLASS ALREADY EXISTS!
         if(!file.exists()) {
             throw new RuntimeException("Impossible to create a configuration if the file doesn't exist. Please create the file at " + file.getAbsolutePath());
         }
-        return Utils.configurableFromFile(clazz, file);
+        return Utils.configurableFromFile(clazz, file, replaceEmptyFieldsWithDefaults);
     }
 
-    public <T extends Bindable> T createAndBindConfigurationObject(Class<T> clazz, File file) {
+    public <T extends Bindable> T createAndBindConfigurationObject(Class<T> clazz, File file, boolean replaceEmptyFieldsWithDefaults) {
         //CHECK IF AN OBJECT OF THAT CLASS ALREADY EXISTS!
         if(!file.exists()) {
             throw new RuntimeException("Impossible to create a configuration if the file doesn't exist. Please create the file at " + file.getAbsolutePath());
         }
-        T obj = Utils.bindableFromFile(clazz, file);
+        T obj = Utils.bindableFromFile(clazz, file, replaceEmptyFieldsWithDefaults);
 
         createBind(obj, file, clazz);
 
@@ -198,9 +205,29 @@ public final class SetYaml {
         }
      }
 
+     public void declareDynamicFileChange(File file) throws IOException, IllegalArgumentException, IllegalAccessException{
+        Map<String, Object> map = Utils.loadOrCrash(snake, file);
+        if(map == null) {
+            return;
+        }
+        for(Field f : getDynamicFields()) {
+            String[] keys = YamlUtils.parseField(f).split("\\.");
+
+            for(int i = 0; i < keys.length -1; i++) {
+                String k = keys[i];
+                Object child = map.get(k);
+                if(!(child == null || !(child instanceof Map))) {
+                    map = (Map<String, Object>)child;
+                }
+            }
+            f.setAccessible(true);
+            f.set(null, map.get(keys[keys.length - 1]));
+        }
+     }
+
      private void setupConfig() {
         config = new FlagConfiguration();
-        config.fillFromFileOrDefaults(config.getFile().toFile());
+        config.fillFromFileOrDefaults(config.getFile().toFile(), true);
         if(config.shouldBindItself()) {
             this.createAndBindConfigurationFile(FlagConfiguration.class, this.getFlagConfiguration(), this.getFlagConfiguration().getFile().toFile(), false);
             config = null;
@@ -215,6 +242,10 @@ public final class SetYaml {
             }
         }
         return null;
+     }
+
+     public List<Field> getDynamicFields() {
+        return dynamic;
      }
 
      private void setupSnake() {
@@ -248,7 +279,6 @@ public final class SetYaml {
      private void setupDynamicSystem() {
         File f = new File(getFlagConfiguration().getWorkingFolder(), getFlagConfiguration().getDynamicFile());
         Utils.overwriteOrCrash(f);
-        WatchServiceThread.watch(f);
-
+        WatchServiceThread.setDynamicFile(f);
      }
 }

@@ -6,10 +6,9 @@ import java.nio.file.Path;
 
 import org.daviipkp.Utils;
 import org.daviipkp.interfaces.Bindable;
-import org.daviipkp.interfaces.Configurable;
 import org.daviipkp.types.WatchType;
 
-public class FlagConfiguration implements Configurable, Bindable {
+public class FlagConfiguration implements Bindable {
 
     private String dynamic_file;
 
@@ -18,6 +17,7 @@ public class FlagConfiguration implements Configurable, Bindable {
     private boolean support_bind;
     private boolean support_dynamic;
     private boolean bind_itself;
+    private boolean debug;
 
     private WatchType watch_type;
 
@@ -80,6 +80,10 @@ public class FlagConfiguration implements Configurable, Bindable {
         return working_folder;
     }
 
+    public boolean canDebug() {
+        return debug;
+    }
+
     @Override
     public void fillDefaults() {
         dynamic_file = "dynamic.yml";
@@ -88,7 +92,7 @@ public class FlagConfiguration implements Configurable, Bindable {
         support_bind = true;
         support_dynamic = true;
         bind_itself = false;
-
+        debug = false;
         watch_type = WatchType.WATCH_SERVICE;
 
         watch_service_delay = 1000;

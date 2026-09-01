@@ -37,35 +37,63 @@ public class Utils {
         return null;
     }
 
-    public static <T extends Bindable> T bindableFromFile(Class<T> clazz, File file) {
-        T obj;
+    public static <T extends Bindable> T bindableFromFile(Class<T> clazz, File file, boolean replaceEmptyWithDefaults) {
+        if(!replaceEmptyWithDefaults) {
+            T obj;
+            try{
+                obj = clazz.getDeclaredConstructor().newInstance();
+            }catch(ReflectiveOperationException e) {
+                throw new RuntimeException("Couldn't create an instance of " + clazz.getSimpleName()+ ". Check your constructor.", e);
+            }
+            fillFromFile(obj, file, null);
+            return obj;
 
-        try{
-            obj = clazz.getDeclaredConstructor().newInstance();
-        }catch(ReflectiveOperationException e) {
-            throw new RuntimeException("Couldn't create an instance of " + clazz.getSimpleName()+ ". Check your constructor.", e);
+        }else{
+            T obj;
+            T defaultObj;
+
+            try{
+                obj = clazz.getDeclaredConstructor().newInstance();
+                defaultObj = clazz.getDeclaredConstructor().newInstance();
+            }catch(ReflectiveOperationException e) {
+                throw new RuntimeException("Couldn't create an instance of " + clazz.getSimpleName()+ ". Check your constructor.", e);
+            }
+            defaultObj.fillDefaults();
+            fillFromFile(obj, file, defaultObj);
+            
+            return obj;
         }
-
-        fillFromFile(obj, file);
-        
-        return obj;
     }
 
-    public static <T extends Configurable> T configurableFromFile(Class<T> clazz, File file) {
-        T obj;
+    public static <T extends Configurable> T configurableFromFile(Class<T> clazz, File file, boolean replaceEmptyWithDefaults) {
+        if(!replaceEmptyWithDefaults) {
+            T obj;
+            try{
+                obj = clazz.getDeclaredConstructor().newInstance();
+            }catch(ReflectiveOperationException e) {
+                throw new RuntimeException("Couldn't create an instance of " + clazz.getSimpleName()+ ". Check your constructor.", e);
+            }
+            fillFromFile(obj, file, null);
+            return obj;
 
-        try{
-            obj = clazz.getDeclaredConstructor().newInstance();
-        }catch(ReflectiveOperationException e) {
-            throw new RuntimeException("Couldn't create an instance of " + clazz.getSimpleName()+ ". Check your constructor.", e);
+        }else{
+            T obj;
+            T defaultObj;
+
+            try{
+                obj = clazz.getDeclaredConstructor().newInstance();
+                defaultObj = clazz.getDeclaredConstructor().newInstance();
+            }catch(ReflectiveOperationException e) {
+                throw new RuntimeException("Couldn't create an instance of " + clazz.getSimpleName()+ ". Check your constructor.", e);
+            }
+            defaultObj.fillDefaults();
+            fillFromFile(obj, file, defaultObj);
+            
+            return obj;
         }
-
-        fillFromFile(obj, file);
-        
-        return obj;
     }
 
-    public static void fillFromFile(Object obj, File file) {
+    public static void fillFromFile(Object obj, File file, Object defaultToReplaceEmptyFields) {
 
         InputStream is;
         try {
@@ -88,7 +116,15 @@ public class Utils {
                 continue;
             }
             Object value = things.get(f.getName());
-            if(value == null)throw new RuntimeException("The configuration file at '" + file.getAbsolutePath() + "'' doesn't have a value for the field named '" + f.getName() + "'', which makes it impossible to create the object of '" + obj.getClass().getSimpleName() + "'");
+            if(value == null){
+                try {
+                    f.setAccessible(true);
+                    value = f.get(defaultToReplaceEmptyFields);
+                    YamlUtils.unsafeFillValue(file, f.getName(), value);
+                } catch (Exception e) {
+                    throw new RuntimeException("The configuration file at '" + file.getAbsolutePath() + "'' doesn't have a value for the field named '" + f.getName() + "'', which makes it impossible to create the object of '" + obj.getClass().getSimpleName() + "'");
+                }
+            }
             f.setAccessible(true);
             try {
                 if(f.getType().isEnum() && (value instanceof String)) {
@@ -167,7 +203,7 @@ public class Utils {
     public static Map<String, Object> loadOrCrash(Yaml snake, Path p) {
         try (InputStream in = new FileInputStream(p.toFile())) {
             Map<String, Object> data = snake.load(in);
-                
+            
             return data;
         } catch (Exception e) {
             ErrorHandler.handleYaml(e);

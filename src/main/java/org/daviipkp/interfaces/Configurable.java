@@ -8,12 +8,22 @@ public interface Configurable {
 
     void fillDefaults();
 
-    default void fillFromFileOrDefaults(File f){
+    default <T extends Configurable> void fillFromFileOrDefaults(File f, boolean replaceEmptyFieldsWithDefaults){
         if (!f.exists()) {
             fillDefaults();
             return;
         }
-        Utils.fillFromFile(this, f);
+        if(replaceEmptyFieldsWithDefaults) {
+            try{
+                T def = (T) this.getClass().getDeclaredConstructor().newInstance();
+                def.fillDefaults();
+                Utils.fillFromFile(this, f, def);
+            }catch(Exception e) {
+                throw new RuntimeException("Couldn't create an instance of " + this.getClass().getSimpleName()+ ". Check your constructor.", e);
+            } 
+        }else{
+            Utils.fillFromFile(this, f, null);
+        }
     }
 
 }

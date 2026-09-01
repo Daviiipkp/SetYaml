@@ -1,6 +1,9 @@
 package org.daviipkp;
 
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.lang.reflect.Field;
 
 import org.yaml.snakeyaml.composer.ComposerException;
 import org.yaml.snakeyaml.constructor.ConstructorException;
@@ -29,6 +32,23 @@ public class ErrorHandler {
         } else {
             throw new RuntimeException("Unexpected error during configuration loading: " + e.getMessage(), e);
         }
+    }
+
+    public static void handleFile(Exception e, File f) {
+        if(e instanceof IOException) {
+            throw new RuntimeException("Couldn't read file at '" + f.getAbsolutePath() + "'. The program having limited permissions might be causing this.");
+        } else if(e instanceof FileNotFoundException) {
+            throw new RuntimeException("Couldn't find the file at '" + f.getAbsolutePath() + "'. Check your path.", e);
+        }
+    }
+
+    public static void handleReflection(Exception e, Field f) {
+        if(e instanceof IllegalAccessException) {
+            throw new RuntimeException("Couldn't access the field '" + f.getName() + "' in the class '" + f.getClass().getSimpleName() + "'. Check your access modifiers.", e);
+        } else if(e instanceof IllegalArgumentException) {
+            throw new RuntimeException("The value for the field '" + f.getName() + "' in the class '" + f.getClass().getSimpleName() + "' is of an incompatible type. Check your configuration file.", e);
+        }
+
     }
 
     
