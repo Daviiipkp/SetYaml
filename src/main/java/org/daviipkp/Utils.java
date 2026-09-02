@@ -37,7 +37,7 @@ public class Utils {
         return null;
     }
 
-    public static <T extends Bindable> T bindableFromFile(Class<T> clazz, File file, boolean replaceEmptyWithDefaults) {
+    public static <T extends Configurable & Bindable> T bindableFromFile(Class<T> clazz, File file, boolean replaceEmptyWithDefaults) {
         if(!replaceEmptyWithDefaults) {
             T obj;
             try{

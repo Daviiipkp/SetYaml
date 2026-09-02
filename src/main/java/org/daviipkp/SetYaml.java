@@ -36,9 +36,6 @@ public final class SetYaml {
     private static Yaml snake;
     private FlagConfiguration config;
 
-    @Dynamic
-    private static long dynamic_debug;
-
     private static SetYaml instance;
 
     public static SetYaml getInstance() {
@@ -55,7 +52,7 @@ public final class SetYaml {
         instance = new SetYaml();
         instance.registerDynamicClass(instance.getClass());
         while(true){
-            DebugUtils.debugDynamicFields();
+            DebugUtils.debugConfiguration(instance.getFlagConfiguration());
             Thread.sleep(1000);
         }
     }
@@ -117,7 +114,7 @@ public final class SetYaml {
 
     }
 
-    public <T extends Bindable> void createAndBindConfigurationFile(Class<T> clazz, T model, File file, boolean overwrite) {
+    public <T extends Configurable & Bindable> void createAndBindConfigurationFile(Class<T> clazz, T model, File file, boolean overwrite) {
         if(file.exists()) {
             if(!overwrite) {
                 System.out.println("Cannot create the new file at '" + file.getAbsolutePath() + "' because it already exists and the overwrite flag is false.");  
@@ -151,7 +148,7 @@ public final class SetYaml {
         return Utils.configurableFromFile(clazz, file, replaceEmptyFieldsWithDefaults);
     }
 
-    public <T extends Bindable> T createAndBindConfigurationObject(Class<T> clazz, File file, boolean replaceEmptyFieldsWithDefaults) {
+    public <T extends Configurable & Bindable> T createAndBindConfigurationObject(Class<T> clazz, File file, boolean replaceEmptyFieldsWithDefaults) {
         //CHECK IF AN OBJECT OF THAT CLASS ALREADY EXISTS!
         if(!file.exists()) {
             throw new RuntimeException("Impossible to create a configuration if the file doesn't exist. Please create the file at " + file.getAbsolutePath());
@@ -163,7 +160,7 @@ public final class SetYaml {
         return obj;
     }
 
-    private <T extends Bindable> void createBind(T obj, File file, Class<T> clazz) {
+    private <T extends Configurable & Bindable> void createBind(T obj, File file, Class<T> clazz) {
         if(getFlagConfiguration().getWatchType().equals(WatchType.WATCH_SERVICE)) {
             WatchServiceThread.watch(file);
         }
@@ -230,17 +227,11 @@ public final class SetYaml {
         config.fillFromFileOrDefaults(config.getFile().toFile(), true);
         if(config.shouldBindItself()) {
             this.createAndBindConfigurationFile(FlagConfiguration.class, this.getFlagConfiguration(), this.getFlagConfiguration().getFile().toFile(), false);
-            config = null;
         }
      }
 
      public FlagConfiguration getFlagConfiguration() {
         if (config != null) return config;
-        for(BindedConfiguration<?> b : binds) {
-            if (b.getObject() instanceof FlagConfiguration) {
-                return (FlagConfiguration)b.getObject();
-            }
-        }
         return null;
      }
 

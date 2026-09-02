@@ -6,8 +6,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 import org.daviipkp.interfaces.Bindable;
+import org.daviipkp.interfaces.Configurable;
 
-public class BindedConfiguration<T extends Bindable> {
+public class BindedConfiguration<T extends Configurable & Bindable> {
 
     private Path configurationFile;
     private T configurationObject;
@@ -32,7 +33,8 @@ public class BindedConfiguration<T extends Bindable> {
             ErrorHandler.handleYaml(e);
             return;
         }
-        configurationObject = SetYaml.getSnake().loadAs(is, configurationClass);
+        configurationObject.declareFileChange(SetYaml.getSnake().loadAs(is, configurationClass));
+        
     }
 
     public T getObject() {

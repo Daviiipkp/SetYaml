@@ -2,7 +2,7 @@ package org.daviipkp.interfaces;
 
 import java.nio.file.Path;
 
-public interface Bindable extends Configurable {
+public interface Bindable {
 
     Path getFile();
 

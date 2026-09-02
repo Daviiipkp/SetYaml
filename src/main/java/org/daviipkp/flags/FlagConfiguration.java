@@ -1,14 +1,18 @@
 package org.daviipkp.flags;
 
 import java.io.File;
+import java.lang.reflect.Field;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
+import java.util.List;
 
 import org.daviipkp.Utils;
 import org.daviipkp.interfaces.Bindable;
+import org.daviipkp.interfaces.Configurable;
+import org.daviipkp.interfaces.Exportable;
 import org.daviipkp.types.WatchType;
 
-public class FlagConfiguration implements Bindable {
+public class FlagConfiguration implements Configurable, Bindable, Exportable {
 
     private String dynamic_file;
 
@@ -109,6 +113,15 @@ public class FlagConfiguration implements Bindable {
             return null;
         }
 
+    }
+
+    @Override
+    public void handleUpdate(List<Field> changes) {
+        System.out.println("GOT A CHANGE");
+    }
+
+    @Override
+    public void exportUpdate() {
     }
 
 }

@@ -1,6 +1,6 @@
 watch_service_delay: 1000
 support_bind: true
-polling_delay: 666
+polling_delay: 66665
 watch_type: WATCH_SERVICE
 bind_itself: true
 dynamic_file: dynamic.yml

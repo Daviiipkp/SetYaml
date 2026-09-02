@@ -4,6 +4,9 @@ import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.daviipkp.interfaces.Configurable;
+import org.daviipkp.interfaces.Exportable;
+
 public class DebugUtils {
 
     private String separator =  " ";
@@ -64,6 +67,13 @@ public class DebugUtils {
                 }
                 printSeparator();
             }
+        }catch(Exception e) {
+        }
+    }
+
+    public static <T extends Configurable & Exportable> void debugConfiguration(T c) {
+        try{
+            DebugUtils.debug(c.classAsJson());
         }catch(Exception e) {
         }
     }
