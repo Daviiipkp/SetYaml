@@ -117,7 +117,6 @@ public class FlagConfiguration implements Configurable, Bindable, Exportable {
 
     @Override
     public void handleUpdate(List<Field> changes) {
-        System.out.println("GOT A CHANGE");
     }
 
     @Override

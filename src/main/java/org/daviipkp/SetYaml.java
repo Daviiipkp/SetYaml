@@ -48,7 +48,7 @@ public final class SetYaml {
     }
 
     
-    public static void main(String[] args) throws InterruptedException {
+    public static void main(String[] args) throws InterruptedException{
         instance = new SetYaml();
         instance.registerDynamicClass(instance.getClass());
         while(true){
@@ -62,18 +62,22 @@ public final class SetYaml {
 
         setupSnake();
 
-        setupConfig();
+        try{
+            setupConfig();
+        }catch(Exception e) {
+            throw new RuntimeException("Error while setting up the configuration file.", e);
+        }
 
 
         if(getFlagConfiguration().canBind() && getFlagConfiguration().getWatchType() == WatchType.POLLING) {
-            setupPolling();
+            setupPolling(); //implement this
         }
 
         if(getFlagConfiguration().canDynamic()) {
             setupDynamicSystem();
         }
         
-
+        DebugUtils.debug("SetYaml has been initialized successfully.");
     }
 
     public void registerDynamicClass(Class<?> clazz) {
@@ -114,7 +118,7 @@ public final class SetYaml {
 
     }
 
-    public <T extends Configurable & Bindable> void createAndBindConfigurationFile(Class<T> clazz, T model, File file, boolean overwrite) {
+    public <T extends Configurable & Bindable> void createAndBindConfigurationFile(Class<T> clazz, T model, File file, boolean overwrite) throws IOException {
         if(file.exists()) {
             if(!overwrite) {
                 System.out.println("Cannot create the new file at '" + file.getAbsolutePath() + "' because it already exists and the overwrite flag is false.");  
@@ -141,15 +145,28 @@ public final class SetYaml {
 
 
     public <T extends Configurable> T createConfigurationObject(Class<T> clazz, File file, boolean replaceEmptyFieldsWithDefaults) {
-        //CHECK IF AN OBJECT OF THAT CLASS ALREADY EXISTS!
+        if(binds != null && getFlagConfiguration().canBind()) {
+            for(BindedConfiguration<?> b : binds) {
+                if(b.getClass().equals(clazz)){
+                    return (T) b.getObject();
+                }
+            }
+        }
+        //Add a verification here to check if an configurable unbinded object exists
         if(!file.exists()) {
             throw new RuntimeException("Impossible to create a configuration if the file doesn't exist. Please create the file at " + file.getAbsolutePath());
         }
         return Utils.configurableFromFile(clazz, file, replaceEmptyFieldsWithDefaults);
     }
 
-    public <T extends Configurable & Bindable> T createAndBindConfigurationObject(Class<T> clazz, File file, boolean replaceEmptyFieldsWithDefaults) {
-        //CHECK IF AN OBJECT OF THAT CLASS ALREADY EXISTS!
+    public <T extends Configurable & Bindable> T createAndBindConfigurationObject(Class<T> clazz, File file, boolean replaceEmptyFieldsWithDefaults) throws IOException {
+        if(binds != null && getFlagConfiguration().canBind()) {
+            for(BindedConfiguration<?> b : binds) {
+                if(b.getClass().equals(clazz)){
+                    return (T) b.getObject();
+                }
+            }
+        }
         if(!file.exists()) {
             throw new RuntimeException("Impossible to create a configuration if the file doesn't exist. Please create the file at " + file.getAbsolutePath());
         }
@@ -160,14 +177,17 @@ public final class SetYaml {
         return obj;
     }
 
-    private <T extends Configurable & Bindable> void createBind(T obj, File file, Class<T> clazz) {
+    private <T extends Configurable & Bindable> void createBind(T obj, File file, Class<T> clazz) throws IOException {
+        if(binds != null && binds.stream().anyMatch(b -> b.getClass().equals(clazz))) {
+            return;
+        }
         if(getFlagConfiguration().getWatchType().equals(WatchType.WATCH_SERVICE)) {
             WatchServiceThread.watch(file);
         }
 
         BindedConfiguration<T> bind = new BindedConfiguration<>(file.toPath(), obj, clazz);
 
-        binds.add(bind); //REALLY SHOULD VERIFY THE BINDS LIST BEFORE ADDING!
+        binds.add(bind);
     }
 
      public void declareFileChange(Path path) throws IOException {
@@ -222,7 +242,7 @@ public final class SetYaml {
         }
      }
 
-     private void setupConfig() {
+     private void setupConfig() throws IOException {
         config = new FlagConfiguration();
         config.fillFromFileOrDefaults(config.getFile().toFile(), true);
         if(config.shouldBindItself()) {
